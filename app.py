@@ -49,10 +49,19 @@ def echo_text(event):
 	payloads = {'starting_point':starting_point, 'end_point':end_point}
 	res = requests.get('https://tline-table-scraping.herokuapp.com/mock', params = payloads)
 	time_table = json.loads(res.text)['time_table']
-	line_bot_api.reply_message(
-		event.reply_token,
-		TextSendMessage(text = res.text)
-	)
+
+	reply = "〇" + starting_point + "から" + end_point + "\n" \
+		+ time_table[0]["time"][0] + " -> " + time_table[0]["time"][1] + " , " + trans_tline_type(time_table[0]["type"]) + "\n"
+
+	line_bot_api.reply_message(event.reply_token, TextSendMessage(text = reply))
+
+def trans_tline_type(type):
+	if type == "local":
+		return "普通"
+	elif type == "rapid":
+		return "特急"
+	else:
+		return "区間快速"
 
 if __name__ == '__main__':
 	host = '0.0.0.0'
