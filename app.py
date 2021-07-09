@@ -51,7 +51,7 @@ def echo_text(event):
 	res = requests.get('https://tline-table-scraping.herokuapp.com/mock', params = payloads)
 	time_table = json.loads(res.text)['time_table']
 	# 返信する内容を作る
-	reply_head = "〇" + starting_point + "から" + end_point
+	reply_head = f'◯{starting_point}から{end_point}'
 	reply_body = make_reply(time_table)
 	reply = reply_head + reply_body
 	# 返信する
@@ -60,7 +60,7 @@ def echo_text(event):
 def make_reply(time_table):
 	reply_body = ""
 	for temp in time_table:
-		reply_body += "\n" + temp["time"][0] + " -> " + temp["time"][1] + " , " + trans_tline_type(temp["type"])
+		reply_body += f'\n{temp["time"][0]} -> {temp["time"][1]} , {trans_tline_type(temp["type"])}'
 	return reply_body
 
 def trans_tline_type(type):
