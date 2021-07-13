@@ -49,12 +49,12 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-	text = event.message.text
+	URLs = load_urls_json_from_file()
 
-	starting_point, end_point = parse_starting_point_and_end_point(text)
+	starting_point, end_point = parse_starting_point_and_end_point(event.message.text)
 
 	payload = {'starting_point': starting_point, 'end_point': end_point}
-	r = requests.get('https://tline-table-scraping.herokuapp.com/scraping', params=payload)
+	r = requests.get(f'{URLs["web_scraper"]["base"]}/{URLs["web_scraper"]["path_name"]}', params=payload)
 
 	time_table = load_time_table_json_from_text(r.text)
 
@@ -65,20 +65,15 @@ def handle_text_message(event):
 	contents['header']['contents'][0]['contents'][0]['text'] = starting_point
 	contents['header']['contents'][2]['contents'][0]['text'] = end_point
 
-	for i in range(len(time_table)):
+	for i, time_table_element in enumerate(time_table):
 		if i > 0:
 			contents['body']['contents'].append(copy.deepcopy(body_contents_separator))
 
 		new_body_contents_box = copy.deepcopy(body_contents_box)
 
-		icon_url = {
-			'local': 'https://firebasestorage.googleapis.com/v0/b/osikore-dd167.appspot.com/o/icon%2Flocal.png?alt=media&token=44fdb2a8-750a-480d-b391-8b30e5c7dc17',
-			'rapid': 'https://firebasestorage.googleapis.com/v0/b/osikore-dd167.appspot.com/o/icon%2Frapid.png?alt=media&token=2b586b1d-e21e-46ab-8dbf-39bfde24e254',
-			'regional_rapid': 'https://firebasestorage.googleapis.com/v0/b/osikore-dd167.appspot.com/o/icon%2Fregional-rapid.png?alt=media&token=a95a8ff1-7a30-4223-8469-7a07ba7eafbe'
-		}
 		# 暫定的にアイコンは全て普通列車のものとする
-		new_body_contents_box['contents'][0]['contents'][0]['url'] = icon_url['local']
-		new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table[i]["time"][0]} → {time_table[i]["time"][1]}'
+		new_body_contents_box['contents'][0]['contents'][0]['url'] = URLs['icon']['local']
+		new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} → {time_table_element["time"][1]}'
 
 		contents['body']['contents'].append(copy.deepcopy(new_body_contents_box))
 
@@ -107,6 +102,12 @@ def load_design_json_from_file():
 		body_contents_separator = json.load(f)
 
 	return flex_message, body_contents_box, body_contents_separator
+
+def load_urls_json_from_file():
+	with open('./urls.json') as f:
+		URLs = json.load(f)
+
+	return URLs
 
 if __name__ == '__main__':
 	host = '0.0.0.0'
