@@ -1,0 +1,59 @@
+{
+	"type": "bubble",
+	"header": {
+		"type": "box",
+		"layout": "horizontal",
+		"flex": 0,
+		"backgroundColor": "#761A23",
+		"borderColor": "#761A23",
+		"contents": [
+			{
+				"type": "box",
+				"layout": "horizontal",
+				"contents": [
+					{
+						"type": "text",
+						"text": "",
+						"size": "lg",
+						"color": "#FFFFFFFF",
+						"align": "center",
+						"contents": []
+					}
+				]
+			},
+			{
+				"type": "box",
+				"layout": "baseline",
+				"contents": [
+					{
+						"type": "icon",
+						"url": "https://firebasestorage.googleapis.com/v0/b/osikore-dd167.appspot.com/o/icon%2Fdual-chevron.png?alt=media&token=0b33d584-3f44-4149-bf6d-d07dd2babbbf",
+						"size": "xl",
+						"offsetStart": "32px"
+					}
+				]
+			},
+			{
+				"type": "box",
+				"layout": "horizontal",
+				"contents": [
+					{
+						"type": "text",
+						"text": "",
+						"size": "lg",
+						"color": "#FFFFFFFF",
+						"align": "center",
+						"contents": []
+					}
+				]
+			}
+		]
+	},
+	"body": {
+		"type": "box",
+		"layout": "vertical",
+		"spacing": "md",
+		"backgroundColor": "#761A23",
+		"contents": []
+	}
+}

@@ -1,0 +1,29 @@
+{
+	"type": "box",
+	"layout": "vertical",
+	"spacing": "sm",
+	"contents": [
+		{
+			"type": "box",
+			"layout": "baseline",
+			"contents": [
+				{
+					"type": "icon",
+					"url": "",
+					"size": "xl",
+					"offsetTop": "5px"
+				},
+				{
+					"type": "text",
+					"text": "",
+					"weight": "regular",
+					"color": "#FFFFFF",
+					"flex": 2,
+					"align": "center",
+					"gravity": "center",
+					"contents": []
+				}
+			]
+		}
+	]
+}
