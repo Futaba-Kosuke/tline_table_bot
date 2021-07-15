@@ -57,7 +57,7 @@ def handle_text_message(event):
 	r = requests.get(f'{URLs["web_scraper"]["base"]}/{URLs["web_scraper"]["path_name"]}', params=payload)
 
 	time_table = load_time_table_json_from_text(r.text)
-	delay_url = load_delay_url_json_from_text(r.text)
+	transfer_url = load_transfer_url_json_from_text(r.text)
 
 	flex_message, body_contents_box, body_contents_separator = load_design_json_from_file()
 
@@ -66,6 +66,7 @@ def handle_text_message(event):
 	contents['header']['contents'][0]['contents'][0]['text'] = starting_point
 	contents['header']['contents'][2]['contents'][0]['text'] = end_point
 
+	transfer_frag = 0
 	for i, time_table_element in enumerate(time_table):
 		if i > 0:
 			contents['body']['contents'].append(copy.deepcopy(body_contents_separator))
@@ -75,15 +76,17 @@ def handle_text_message(event):
 		# 暫定的にアイコンは全て普通列車のものとする
 		new_body_contents_box['contents'][0]['contents'][0]['url'] = URLs['icon']['local']
 
+		# 矢印の変更
 		if time_table_element["transfer"] == 0:
 			new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} → {time_table_element["time"][1]}'
 		else:
+			transfer_frag = 1
 			new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} ⇢ {time_table_element["time"][1]}'
-
 		contents['body']['contents'].append(copy.deepcopy(new_body_contents_box))
 
-		if i == len(time_table)-1:
-			new_body_contents_box['contents'][0]['contents'][1]['text'] = delay_url
+	if transfer_frag == 1:
+		transfer_frag = 0
+		contents['footer']['contents'][0]['action']['uri'] = transfer_url
 
 	line_bot_api.reply_message(
 		event.reply_token,
@@ -101,10 +104,10 @@ def load_time_table_json_from_text(text):
 
 	return time_table
 
-def load_delay_url_json_from_text(text):
-	delay_url = json.loads(text)['url']
+def load_transfer_url_json_from_text(text):
+	transfer_url = json.loads(text)['url']
 
-	return delay_url
+	return transfer_url
 
 def load_design_json_from_file():
 	with open('./design/flex_message.json') as f:
