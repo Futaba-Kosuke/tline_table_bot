@@ -66,27 +66,21 @@ def handle_text_message(event):
 	contents['header']['contents'][0]['contents'][0]['text'] = starting_point
 	contents['header']['contents'][2]['contents'][0]['text'] = end_point
 
-	transfer_frag = 0
 	for i, time_table_element in enumerate(time_table):
 		if i > 0:
 			contents['body']['contents'].append(copy.deepcopy(body_contents_separator))
 
 		new_body_contents_box = copy.deepcopy(body_contents_box)
 
-		# 暫定的にアイコンは全て普通列車のものとする
-		new_body_contents_box['contents'][0]['contents'][0]['url'] = URLs['icon']['local']
+		new_body_contents_box['contents'][0]['contents'][0]['url'] = identify_type(time_table_element["type"],URLs)
 
-		# 矢印の変更
 		if time_table_element["transfer"] == 0:
 			new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} → {time_table_element["time"][1]}'
 		else:
-			transfer_frag = 1
 			new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} ⇢ {time_table_element["time"][1]}'
 		contents['body']['contents'].append(copy.deepcopy(new_body_contents_box))
 
-	if transfer_frag == 1:
-		transfer_frag = 0
-		contents['footer']['contents'][0]['action']['uri'] = transfer_url
+	contents['footer']['contents'][0]['action']['uri'] = transfer_url
 
 	line_bot_api.reply_message(
 		event.reply_token,
@@ -124,6 +118,14 @@ def load_urls_json_from_file():
 		URLs = json.load(f)
 
 	return URLs
+
+def identify_type(type,URLs):
+	if type == "local":
+		return URLs['icon']['local']
+	elif type == "rapid":
+		return URLs['icon']['rapid']
+	else:
+		return URLs['icon']['regional_rapid']
 
 if __name__ == '__main__':
 	host = '0.0.0.0'
