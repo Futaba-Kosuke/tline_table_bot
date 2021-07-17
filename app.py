@@ -56,7 +56,7 @@ def handle_text_message(event):
 	payload = {'starting_point': starting_point, 'end_point': end_point}
 	r = requests.get(f'{URLs["web_scraper"]["base"]}/{URLs["web_scraper"]["path_name"]}', params=payload)
 
-	time_table = load_time_table_json_from_text(r.text)
+	time_table,transfer_url = load_datas_form_json(r.text)
 
 	flex_message, body_contents_box, body_contents_separator = load_design_json_from_file()
 
@@ -71,11 +71,15 @@ def handle_text_message(event):
 
 		new_body_contents_box = copy.deepcopy(body_contents_box)
 
-		# 暫定的にアイコンは全て普通列車のものとする
-		new_body_contents_box['contents'][0]['contents'][0]['url'] = URLs['icon']['local']
-		new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} → {time_table_element["time"][1]}'
+		new_body_contents_box['contents'][0]['contents'][0]['url'] = identify_type(time_table_element["type"],URLs)
 
+		if time_table_element["transfer"] == 0:
+			new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} → {time_table_element["time"][1]}'
+		else:
+			new_body_contents_box['contents'][0]['contents'][1]['text'] = f'{time_table_element["time"][0]} ⇢ {time_table_element["time"][1]}'
 		contents['body']['contents'].append(copy.deepcopy(new_body_contents_box))
+
+	contents['footer']['contents'][0]['action']['uri'] = transfer_url
 
 	line_bot_api.reply_message(
 		event.reply_token,
@@ -88,10 +92,10 @@ def parse_starting_point_and_end_point(text):
 
 	return starting_point, end_point
 
-def load_time_table_json_from_text(text):
-	time_table = json.loads(text)['time_table']
+def load_datas_form_json(text):
+	datas = json.loads(text)
 
-	return time_table
+	return datas['time_table'],datas['url']
 
 def load_design_json_from_file():
 	with open('./design/flex_message.json') as f:
@@ -108,6 +112,14 @@ def load_urls_json_from_file():
 		URLs = json.load(f)
 
 	return URLs
+
+def identify_type(type,URLs):
+	if type == "local":
+		return URLs['icon']['local']
+	elif type == "rapid":
+		return URLs['icon']['rapid']
+	else:
+		return URLs['icon']['regional_rapid']
 
 if __name__ == '__main__':
 	host = '0.0.0.0'
