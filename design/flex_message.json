@@ -55,5 +55,32 @@
 		"spacing": "md",
 		"backgroundColor": "#761A23",
 		"contents": []
+	},
+	"footer": {
+		"type": "box",
+		"layout": "vertical",
+		"backgroundColor": "#761A23",
+		"contents": [
+			{
+				"type": "box",
+				"layout": "vertical",
+				"action": {
+				"type": "uri",
+				"label": "URL",
+				"uri": ""
+				},
+				"contents": [
+					{
+						"type": "text",
+						"text": "詳細はこちら",
+						"weight": "regular",
+						"color": "#FFFFFF",
+						"flex": 1,
+						"align": "center",
+						"contents": []
+					}
+				]
+			}
+		]
 	}
 }
