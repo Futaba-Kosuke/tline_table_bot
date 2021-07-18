@@ -3,6 +3,7 @@ import json
 import os
 import requests
 import sys
+from typing import List
 
 from flask import Flask, request, abort
 from linebot import (
@@ -14,6 +15,8 @@ from linebot.exceptions import (
 from linebot.models import (
     MessageEvent, TextMessage, FlexSendMessage
 )
+
+from firebase import Firebase
 
 app = Flask(__name__)
 
@@ -28,6 +31,8 @@ if channel_access_token is None:
 
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
+
+firebase = Firebase()
 
 
 @app.route('/callback', methods=['POST'])
@@ -52,10 +57,25 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     URLs = load_urls_json_from_file()
+    message: List[str] = event.message.text.split()
 
-    starting_point, end_point = parse_starting_point_and_end_point(event.message.text)
+    if message[0] == '区間登録':
+        user_id: str = event.source.user_id
+        commuter_pass = get_scraping_payload(message[1])
+        firebase.post_user_commuter_pass(user_id=user_id,
+                                         commuter_pass=commuter_pass)
+        line_bot_api.reply_message(
+            event.reply_token,
+            messages=TextMessage(text=f'{message[1]}で登録しました！')
+        )
 
-    payload = {'starting_point': starting_point, 'end_point': end_point}
+    if message[0] == '定期':
+        user_id: str = event.source.user_id
+        payload = firebase.get_user_commuter_pass(user_id=user_id)
+
+    else:
+        payload = get_scraping_payload(message[0])
+
     r = requests.get(f'{URLs["web_scraper"]["base"]}/{URLs["web_scraper"]["path_name"]}', params=payload)
 
     time_table, transfer_url = load_datas_form_json(r.text)
@@ -64,8 +84,8 @@ def handle_text_message(event):
 
     contents = copy.deepcopy(flex_message)
 
-    contents['header']['contents'][0]['contents'][0]['text'] = starting_point
-    contents['header']['contents'][2]['contents'][0]['text'] = end_point
+    contents['header']['contents'][0]['contents'][0]['text'] = payload['starting_point']
+    contents['header']['contents'][2]['contents'][0]['text'] = payload['end_point']
 
     for i, time_table_element in enumerate(time_table):
         if i > 0:
@@ -87,15 +107,18 @@ def handle_text_message(event):
 
     line_bot_api.reply_message(
         event.reply_token,
-        FlexSendMessage(alt_text=f'{starting_point}から{end_point}', contents=contents)
+        FlexSendMessage(alt_text=f'{payload["starting_point"]}から{payload["end_point"]}', contents=contents)
     )
 
 
-def parse_starting_point_and_end_point(text):
+def get_scraping_payload(text):
     # 暫定的
     starting_point, end_point = text.split('から', maxsplit=1)
 
-    return starting_point, end_point
+    return {
+        'starting_point': starting_point,
+        'end_point': end_point
+    }
 
 
 def load_datas_form_json(text):
