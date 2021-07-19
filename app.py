@@ -68,10 +68,17 @@ def handle_text_message(event):
             event.reply_token,
             messages=TextMessage(text=f'{message[1]}で登録しました！')
         )
+        return
 
     if message[0] == '定期':
         user_id: str = event.source.user_id
         payload = firebase.get_user_commuter_pass(user_id=user_id)
+        if payload == 'Not Found':
+            line_bot_api.reply_message(
+                event.reply_token,
+                messages=TextMessage(text='まだ区間登録が済んでいません！')
+            )
+            return
 
     else:
         payload = get_scraping_payload(message[0])
@@ -109,6 +116,7 @@ def handle_text_message(event):
         event.reply_token,
         FlexSendMessage(alt_text=f'{payload["starting_point"]}から{payload["end_point"]}', contents=contents)
     )
+    return
 
 
 def get_scraping_payload(text):
