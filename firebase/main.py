@@ -29,7 +29,7 @@ class Firebase:
         self.db.collection(COLLECTION_NAME).document(user_id).set(user_preference)
 
     def get_user_commuter_pass(self, user_id: str) -> Union[CommuterPassType, str]:
-        response = self.db.collection(COLLECTION_NAME).where(user_id).get()
+        response = self.db.collection(COLLECTION_NAME).document(user_id).get()
         if response.exists:
             return response.to_dict()['commuter_pass']
         else:
