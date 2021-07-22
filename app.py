@@ -57,7 +57,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-    icons = load_urls_json_from_file()
+    icons = load_icons_json_from_file()
     message: List[str] = event.message.text.split()
 
     if message[0] == '区間登録':
@@ -147,7 +147,7 @@ def load_design_json_from_file() -> Tuple[Any, Any, Any]:
     return flex_message, body_contents_box, body_contents_separator
 
 
-def load_urls_json_from_file(path: str = './icons.json') -> dict[str, str]:
+def load_icons_json_from_file(path: str = './icons.json') -> dict[str, str]:
     with open(path) as f:
         icons: dict[str, str] = json.load(f)
     return icons
