@@ -3,7 +3,7 @@ import json
 import os
 import requests
 import sys
-from typing import List
+from typing import List, Final, Any, Tuple
 
 from flask import Flask, request, abort
 from linebot import (
@@ -20,17 +20,18 @@ from firebase import Firebase
 
 app = Flask(__name__)
 
-channel_secret = os.getenv('LINE_CHANNEL_SECRET', None)
-channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', None)
-if channel_secret is None:
+SCRAPING_SERVER_URL: Final[str] = os.getenv('SCRAPING_SERVER_URL', None)
+CHANNEL_SECRET: Final[str] = os.getenv('LINE_CHANNEL_SECRET', None)
+CHANNEL_ACCESS_TOKEN: Final[str] = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', None)
+if CHANNEL_SECRET is None:
     print('Specify LINE_CHANNEL_SECRET as environment variable.')
     sys.exit(1)
-if channel_access_token is None:
+if CHANNEL_ACCESS_TOKEN is None:
     print('Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.')
     sys.exit(1)
 
-line_bot_api = LineBotApi(channel_access_token)
-handler = WebhookHandler(channel_secret)
+line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(CHANNEL_SECRET)
 
 firebase = Firebase()
 
@@ -56,7 +57,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-    URLs = load_urls_json_from_file()
+    icons = load_icons_json_from_file()
     message: List[str] = event.message.text.split()
 
     if message[0] == '区間登録':
@@ -83,7 +84,7 @@ def handle_text_message(event):
     else:
         payload = get_scraping_payload(message[0])
 
-    r = requests.get(f'{URLs["web_scraper"]["base"]}/{URLs["web_scraper"]["path_name"]}', params=payload)
+    r = requests.get(f'{SCRAPING_SERVER_URL}/scraping', params=payload)
 
     time_table, transfer_url = load_datas_form_json(r.text)
 
@@ -100,7 +101,7 @@ def handle_text_message(event):
 
         new_body_contents_box = copy.deepcopy(body_contents_box)
 
-        new_body_contents_box['contents'][0]['contents'][0]['url'] = identify_type(time_table_element["type"], URLs)
+        new_body_contents_box['contents'][0]['contents'][0]['url'] = identify_type(time_table_element["type"], icons)
 
         if time_table_element["transfer"] == 0:
             new_body_contents_box['contents'][0]['contents'][1][
@@ -119,7 +120,7 @@ def handle_text_message(event):
     return
 
 
-def get_scraping_payload(text):
+def get_scraping_payload(text: str) -> dict[str, str]:
     # 暫定的
     starting_point, end_point = text.split('から', maxsplit=1)
 
@@ -129,13 +130,13 @@ def get_scraping_payload(text):
     }
 
 
-def load_datas_form_json(text):
+def load_datas_form_json(text: str) -> Any:
     datas = json.loads(text)
 
     return datas['time_table'], datas['url']
 
 
-def load_design_json_from_file():
+def load_design_json_from_file() -> Tuple[Any, Any, Any]:
     with open('./design/flex_message.json') as f:
         flex_message = json.load(f)
     with open('./design/body_contents_box.json') as f:
@@ -146,20 +147,19 @@ def load_design_json_from_file():
     return flex_message, body_contents_box, body_contents_separator
 
 
-def load_urls_json_from_file():
-    with open('./urls.json') as f:
-        URLs = json.load(f)
+def load_icons_json_from_file(path: str = './icons.json') -> dict[str, str]:
+    with open(path) as f:
+        icons: dict[str, str] = json.load(f)
+    return icons
 
-    return URLs
 
-
-def identify_type(type, URLs):
-    if type == "local":
-        return URLs['icon']['local']
-    elif type == "rapid":
-        return URLs['icon']['rapid']
+def identify_type(train_type: str, icons: dict[str, str]) -> str:
+    if train_type == "local":
+        return icons['local']
+    elif train_type == "rapid":
+        return icons['rapid']
     else:
-        return URLs['icon']['regional_rapid']
+        return icons['regional_rapid']
 
 
 if __name__ == '__main__':
