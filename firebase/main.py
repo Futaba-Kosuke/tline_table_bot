@@ -1,3 +1,4 @@
+import os
 from typing import Final, Union, TypedDict
 
 import firebase_admin
@@ -15,6 +16,9 @@ class Firebase:
 
     def __init__(self, cred_path: str = './firebase/cred.json') -> None:
         # firebaseの初期化
+        if not os.path.isfile(cred_path):
+            with open(cred_path, 'w') as f:
+                f.write(os.getenv('FIREBASE_CRED_JSON', None))
         cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
 
